@@ -1,0 +1,24 @@
+{
+  "protocol": "fabushi.miniapp.package.v1",
+  "id": "douyin-batch-downloader",
+  "version": "1.0.0",
+  "title": "抖音批量无水印下载",
+  "entry": "index.html",
+  "runtime": "local-web",
+  "portable": true,
+  "modes": ["GUI", "MCP", "CLI", "本地"],
+  "commands": ["resolve", "download"],
+  "cli": "mahayana miniapp run douyin-batch-downloader",
+  "descriptors": {
+    "mahayana": ".mahayana/plugin.json",
+    "mcp": ".mcp.json",
+    "plugin": ".codex-plugin/plugin.json"
+  },
+  "runtimeDependency": {
+    "host": "mahayana",
+    "provider": "fabushi-official-miniapps",
+    "plugin": "douyin-batch-downloader"
+  },
+  "source": "https://github.com/bhrumom/fabushi",
+  "notice": "仅下载你有权访问和保存的内容；不绕过登录、验证码、私密内容或 DRM。"
+}
