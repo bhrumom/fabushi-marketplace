@@ -1,0 +1,13 @@
+{
+  "protocol": "fabushi.miniapp.package.v1",
+  "id": "teleprompter-recorder",
+  "version": "1.0.0",
+  "title": "口播提词器",
+  "entry": "index.html",
+  "runtime": "local-web",
+  "portable": true,
+  "modes": ["GUI", "视频通话", "提词", "录制", "本地", "WebMCP"],
+  "commands": ["open_recorder"],
+  "source": "https://github.com/bhrumom/fabushi",
+  "notice": "摄像头和麦克风由 Fabushi 通话宿主管理；录制视频只通过 Fabushi 媒体层保存到当前 Bot 会话。"
+}
