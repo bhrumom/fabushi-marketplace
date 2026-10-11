@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "appId": "global-dharma",
+  "publisherId": "fabushi-official",
+  "version": "1.1.0",
+  "displayName": "全球法布施",
+  "entrypoint": "index.html",
+  "runtime": "web",
+  "minHostApi": 1,
+  "offlineCore": true,
+  "requestedCapabilities": [
+    "offline.capabilities",
+    "offline.state.read",
+    "offline.practice.record",
+    "local.prayer-wheel.start"
+  ],
+  "networkPolicy": {
+    "mode": "deny",
+    "allowedOrigins": []
+  }
+}
