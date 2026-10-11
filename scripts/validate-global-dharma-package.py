@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
+import gzip
 import hashlib
+import io
 import json
 import os
 import re
@@ -125,14 +127,18 @@ signing_payload = b"fabushi.fabapp.manifest.v1\x00" + manifest_bytes
 (OUT / "signing-payload.bin").write_bytes(signing_payload)
 
 candidate_archive = OUT / "global-dharma-1.1.0-unsigned-candidate.tar.gz"
-with tarfile.open(candidate_archive, "w:gz", format=tarfile.PAX_FORMAT) as tar:
-    for path in sorted(candidate_root.iterdir()):
-        info = tar.gettarinfo(str(path), arcname=path.name)
-        info.uid = info.gid = 0
-        info.uname = info.gname = ""
-        info.mtime = 0
-        with path.open("rb") as handle:
-            tar.addfile(info, handle)
+with candidate_archive.open("wb") as raw:
+    with gzip.GzipFile(filename="", mode="wb", fileobj=raw, mtime=0) as gz:
+        with tarfile.open(fileobj=gz, mode="w", format=tarfile.USTAR_FORMAT) as tar:
+            for path in sorted(candidate_root.iterdir()):
+                data = path.read_bytes()
+                info = tarfile.TarInfo(path.name)
+                info.size = len(data)
+                info.mode = 0o644
+                info.uid = info.gid = 0
+                info.uname = info.gname = ""
+                info.mtime = 0
+                tar.addfile(info, io.BytesIO(data))
 
 archive_data = candidate_archive.read_bytes()
 evidence = {
