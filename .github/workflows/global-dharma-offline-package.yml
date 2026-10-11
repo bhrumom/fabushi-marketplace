@@ -7,9 +7,12 @@ on:
       - "scripts/validate-global-dharma-package.py"
       - "docs/specs/global-dharma-offline-fabapp.md"
       - ".github/workflows/global-dharma-offline-package.yml"
+      - "scripts/finalize-global-dharma-package.py"
   push:
     branches:
+      - "main"
       - "feat/global-dharma-offline-fabapp-20261011"
+      - "ci/global-dharma-release-finalizer-20261011"
     paths:
       - "marketplace/packages/global-dharma/**"
       - "scripts/validate-global-dharma-package.py"
@@ -43,6 +46,48 @@ jobs:
           test ! -f dist/global-dharma-1.1.0/candidate/manifest.json
           test -f dist/global-dharma-1.1.0/candidate/manifest.unsigned.json
           test -f dist/global-dharma-1.1.0/signing-payload.bin
+
+      - name: Create isolated test-only Ed25519 signing response
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs=require('fs');
+          const crypto=require('crypto');
+          const manifest=JSON.parse(fs.readFileSync('dist/global-dharma-1.1.0/candidate/manifest.unsigned.json','utf8'));
+          const canonical=(v)=>{
+            if(v===null||typeof v==='boolean'||typeof v==='string') return JSON.stringify(v);
+            if(typeof v==='number'){ if(!Number.isSafeInteger(v)) throw new Error('unsafe number'); return String(v); }
+            if(Array.isArray(v)) return '['+v.map(canonical).join(',')+']';
+            return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+canonical(v[k])).join(',')+'}';
+          };
+          const {privateKey,publicKey}=crypto.generateKeyPairSync('ed25519');
+          const payload=Buffer.concat([
+            Buffer.from('fabushi.fabapp.manifest.v1\0','utf8'),
+            Buffer.from(canonical(manifest),'utf8'),
+          ]);
+          const signature=crypto.sign(null,payload,privateKey).toString('base64url');
+          const jwk=publicKey.export({format:'jwk'});
+          const response={
+            manifest:{...manifest,signature:{algorithm:'Ed25519',keyId:'ci-ephemeral-test-only',value:signature}},
+            trust:{
+              algorithm:'Ed25519',
+              keyId:'ci-ephemeral-test-only',
+              trustEpoch:1,
+              publicKeyFingerprint:'ci-ephemeral-test-only',
+              rawPublicKeyBase64URL:jwk.x,
+            },
+          };
+          fs.writeFileSync('dist/global-dharma-1.1.0/test-signed-response.json',JSON.stringify(response));
+          NODE
+
+      - name: Verify signed-package finalizer with isolated test key
+        run: |
+          set -euo pipefail
+          rm -rf dist/global-dharma-1.1.0/test-final
+          python3 scripts/finalize-global-dharma-package.py             --signed-response dist/global-dharma-1.1.0/test-signed-response.json             --out-dir dist/global-dharma-1.1.0/test-final             --source-sha "$GITHUB_SHA"             --signing-environment test
+          test "$(jq -r .signingEnvironment dist/global-dharma-1.1.0/test-final/release-evidence.json)" = test
+          test "$(jq -r .signature.keyId dist/global-dharma-1.1.0/test-final/release-evidence.json)" = ci-ephemeral-test-only
+          test -s dist/global-dharma-1.1.0/test-final/global-dharma-1.1.0.fabapp
 
       - name: Upload source-contract evidence
         uses: actions/upload-artifact@v4
