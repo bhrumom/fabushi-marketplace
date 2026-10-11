@@ -1,0 +1,53 @@
+name: Global Dharma offline package
+
+on:
+  pull_request:
+    paths:
+      - "marketplace/packages/global-dharma/**"
+      - "scripts/validate-global-dharma-package.py"
+      - "docs/specs/global-dharma-offline-fabapp.md"
+      - ".github/workflows/global-dharma-offline-package.yml"
+  push:
+    branches:
+      - "feat/global-dharma-offline-fabapp-20261011"
+    paths:
+      - "marketplace/packages/global-dharma/**"
+      - "scripts/validate-global-dharma-package.py"
+      - "docs/specs/global-dharma-offline-fabapp.md"
+      - ".github/workflows/global-dharma-offline-package.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-contract:
+    name: source-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Validate offline package source and WebMCP contract
+        run: |
+          set -euo pipefail
+          python3 scripts/validate-global-dharma-package.py
+
+      - name: Assert candidate is explicitly unsigned and non-installable
+        run: |
+          set -euo pipefail
+          test "$(jq -r .status dist/global-dharma-1.1.0/candidate-evidence.json)" = "unsigned-candidate-not-installable"
+          test "$(jq -r .productionSigning.status dist/global-dharma-1.1.0/candidate-evidence.json)" = "blocked"
+          test ! -f dist/global-dharma-1.1.0/candidate/manifest.json
+          test -f dist/global-dharma-1.1.0/candidate/manifest.unsigned.json
+          test -f dist/global-dharma-1.1.0/signing-payload.bin
+
+      - name: Upload source-contract evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: global-dharma-1.1.0-unsigned-source-candidate-${{ github.sha }}
+          path: dist/global-dharma-1.1.0/
+          if-no-files-found: error
+          retention-days: 14
