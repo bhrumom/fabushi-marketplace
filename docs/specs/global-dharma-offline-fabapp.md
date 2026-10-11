@@ -24,11 +24,11 @@ Source directory:
 
 Generated artifact:
 
-`global-dharma-1.1.0.fabapp` (deterministic gzip/tar payload compatible with the existing `fabushi.miniapp.package.v1` verifier).
+`global-dharma-1.1.0.fabapp` (canonical OMA-001 catalog package consumed by the strict iOS `.fabapp` verifier). The historical `fabushi.miniapp.package.v1` tar manifest is migration provenance only and is not the new package contract.
 
 Required files:
 
-- `fabushi-miniapp.json`
+- `manifest.json` — generated/pinned strict catalog manifest v1
 - `index.html`
 - `style.css`
 - `app.js`
@@ -75,20 +75,27 @@ The page never performs entitlement or payment requests itself. The iOS Host mus
 
 The release metadata must advertise the exact four local tools above so the iOS Host grant envelope can intersect with page registration. Tool permissions must distinguish read-only from mutation/protected mutation.
 
-The package source is immutable by version. Artifact digest/size are produced on GitHub Actions only and then pinned in Marketplace release metadata. No local or persistent-device packaging is permitted.
+The strict `manifest.json` fields are exactly those accepted by the iOS verifier: `manifestVersion`, `packageClass`, `appId`, `publisherId`, `version`, `displayName`, `entrypoint`, `runtime`, `minHostApi`, `offlineCore`, `requestedCapabilities`, `networkPolicy`, `files`, and `signature`. For Global Dharma: `runtime="web"`, `offlineCore=true`, and `networkPolicy={"mode":"deny","allowedOrigins":[]}`.
+
+`files` is generated from the exact resource bytes and contains SHA-256, byte count and MIME for every resource. Catalog installation is fail-closed unless the manifest carries an Ed25519 signature from the trusted publisher/key registered by the Host. The signing payload is the verifier's `fabushi.fabapp.manifest.v1\\0` domain separator plus canonical manifest JSON with `signature` removed.
+
+The package source is immutable by version. Resource digests, final manifest, package digest/size and production signature are produced on GitHub Actions/trusted release infrastructure only and then pinned in Marketplace release metadata. No local or persistent-device packaging is permitted. A PR build may produce an unsigned candidate manifest/resource bundle for inspection, but it must never be named or accepted as a production `.fabapp`.
 
 ## GitHub Actions
 
 A dedicated workflow must:
 
 1. checkout exact source;
-2. validate manifest identity/version/entry/runtime;
+2. validate source identity/version/entry/runtime and strict manifest-v1 inputs;
 3. reject remote URL references and reject CSP/network capability on the free path;
 4. validate required local WebMCP registrations;
-5. build the deterministic `.fabapp` archive;
-6. verify archive entries, SHA-256 and byte size;
-7. upload the archive plus machine-readable release metadata as Actions artifacts;
-8. when expected digest/size are pinned, fail closed on mismatch.
+5. calculate every resource SHA-256/bytes/MIME and generate the unsigned strict manifest candidate;
+6. on an authorized protected release, obtain the trusted Ed25519 signature through the platform trusted signer/OIDC path and create final `manifest.json`;
+7. build the deterministic `.fabapp`, then verify archive entries, manifest signature, SHA-256 and byte size;
+8. upload the archive plus machine-readable release metadata/provenance as Actions artifacts;
+9. when expected digest/size are pinned, fail closed on mismatch.
+
+Until the trusted Marketplace signing/OIDC owner is available, steps 6-9 for a production-signed package are BLOCKED; source-contract CI must still run and pass without inventing a test signer.
 
 No local build/package/test may substitute for this evidence.
 
@@ -107,7 +114,8 @@ No local build/package/test may substitute for this evidence.
 |---|---|---|
 | Spec exists before package implementation | passed | this file |
 | 1.1.0 source package | pending | |
-| Actions-only deterministic packaging | pending | |
+| Actions-only source candidate packaging | pending | |
+| Trusted catalog Ed25519 signing | blocked | canonical trusted Marketplace signing/OIDC owner not yet available; no test key may substitute |
 | Local free WebMCP tools | pending | |
 | Protected capability declared | pending | |
 | Digest/size pinned | pending | |
