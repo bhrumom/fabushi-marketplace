@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "pluginId": "global-dharma",
+  "displayName": "全球法布施",
+  "version": "1.1.0",
+  "installMode": "package",
+  "tools": [
+    {
+      "name": "offline.capabilities",
+      "title": "查看离线能力",
+      "description": "读取当前全球法布施包实际声明的免费离线与受保护能力。",
+      "approval": "none",
+      "annotations": {"readOnlyHint": true},
+      "inputSchema": {"type": "object", "properties": {}, "additionalProperties": false}
+    },
+    {
+      "name": "offline.state.read",
+      "title": "读取本地状态",
+      "description": "读取当前页面正在使用的持久化本地状态与 revision。",
+      "approval": "none",
+      "annotations": {"readOnlyHint": true},
+      "inputSchema": {"type": "object", "properties": {}, "additionalProperties": false}
+    },
+    {
+      "name": "offline.practice.record",
+      "title": "记录免费本地修持",
+      "description": "执行一项无需联网的本地免费操作并立即更新当前页面和持久状态。",
+      "approval": "required",
+      "annotations": {"readOnlyHint": false},
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "label": {"type": "string", "maxLength": 80}
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "local.prayer-wheel.start",
+      "title": "启动本地转经轮",
+      "description": "受保护能力；Host 必须在每次执行前完成当前账户的在线 entitlement 核验。",
+      "approval": "required",
+      "annotations": {"readOnlyHint": false},
+      "inputSchema": {"type": "object", "properties": {}, "additionalProperties": false}
+    }
+  ]
+}
