@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 import argparse
 import base64
-import gzip
 import hashlib
-import io
 import json
 import os
-import shutil
 import subprocess
-import tarfile
 import tempfile
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -93,25 +90,17 @@ def verify_signature(unsigned, signature, trust):
             die("Backend-managed Ed25519 signature did not verify: " + verified.stderr.strip())
     return payload
 
-def add_bytes(tar, name, data):
-    info = tarfile.TarInfo(name)
-    info.size = len(data)
-    info.mode = 0o644
-    info.uid = 0
-    info.gid = 0
-    info.uname = ""
-    info.gname = ""
-    info.mtime = 0
-    tar.addfile(info, io.BytesIO(data))
-
 def build_deterministic_fabapp(output_path, manifest_bytes):
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    with output_path.open("wb") as raw:
-        with gzip.GzipFile(filename="", mode="wb", fileobj=raw, mtime=0) as gz:
-            with tarfile.open(fileobj=gz, mode="w", format=tarfile.USTAR_FORMAT) as tar:
-                add_bytes(tar, "manifest.json", manifest_bytes)
-                for rel in sorted(MIME):
-                    add_bytes(tar, rel, (SRC / rel).read_bytes())
+    entries = [("manifest.json", manifest_bytes)]
+    entries.extend((rel, (SRC / rel).read_bytes()) for rel in sorted(MIME))
+    with zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_STORED, allowZip64=False) as archive:
+        for name, data in entries:
+            info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_STORED
+            info.create_system = 3
+            info.external_attr = (0o100644 << 16)
+            archive.writestr(info, data)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -147,7 +136,7 @@ def main():
     )
 
     fabapp = out / "global-dharma-1.1.0.fabapp"
-    build_deterministic_fabapp(fabapp, manifest_bytes + b"\n")
+    build_deterministic_fabapp(fabapp, manifest_bytes)
     package = fabapp.read_bytes()
     evidence = {
         "schemaVersion": 1,
