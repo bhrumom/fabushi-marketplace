@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'none'; img-src 'self' data:; font-src 'self'; style-src 'self'; script-src 'self'; media-src 'self'; frame-src 'none'; object-src 'none'; form-action 'none'; base-uri 'none'">
+  <title>全球法布施</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <p class="eyebrow">GLOBAL DHARMA · OFFLINE</p>
+      <h1>全球法布施</h1>
+      <p class="lede">免费功能完全在本机运行。只有受保护能力在执行边界由 Fabushi Host 联网核验资格。</p>
+      <div class="status-row">
+        <span id="bridge-status" class="pill">WebMCP 正在连接</span>
+        <span class="pill">网络：免费路径不需要</span>
+      </div>
+    </header>
+
+    <section class="panel" aria-labelledby="state-title">
+      <div class="panel-head">
+        <div>
+          <p class="eyebrow">LOCAL STATE</p>
+          <h2 id="state-title">当前本地状态</h2>
+        </div>
+        <strong id="revision" class="revision">rev 0</strong>
+      </div>
+      <dl class="stats">
+        <div><dt>免费操作</dt><dd id="free-count">0</dd></div>
+        <div><dt>转经轮启动</dt><dd id="prayer-count">0</dd></div>
+      </dl>
+      <p id="last-action" class="muted">尚无操作</p>
+      <button id="free-action" type="button">执行免费本地操作</button>
+    </section>
+
+    <section class="panel" aria-labelledby="protected-title">
+      <p class="eyebrow">PROTECTED</p>
+      <h2 id="protected-title">本地转经轮</h2>
+      <p class="muted">此按钮不会在网页中自行解锁。它必须经过 Host 的用户批准与实时 entitlement 核验。</p>
+      <button id="prayer-action" type="button">请求启动本地转经轮</button>
+      <p id="protected-result" class="muted" role="status"></p>
+    </section>
+
+    <section class="panel" aria-labelledby="cap-title">
+      <p class="eyebrow">CAPABILITIES</p>
+      <h2 id="cap-title">实际能力</h2>
+      <ul id="capabilities"></ul>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
