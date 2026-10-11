@@ -76,7 +76,7 @@ for forbidden in ("fetch(", "XMLHttpRequest", "WebSocket", "EventSource", "navig
     if forbidden in js:
         fail("offline package contains a network primitive: " + forbidden)
 for tool in TOOLS:
-    registration = 'api.registerLocalTool({\\n      name: "' + tool + '"'
+    registration = 'api.registerLocalTool({\n      name: "' + tool + '"'
     if js.count(registration) != 1:
         fail("local page must register exactly one implementation for " + tool)
 if 'api.call("local.prayer-wheel.start", {})' not in js:
